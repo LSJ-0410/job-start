@@ -6,7 +6,7 @@ EKS_CLUSTER_NAME="my-eks"
 AWS_PROFILE="admin_user"
 KUBECTL_VERSION="1.24.13"
 KUBECTL_RELEASE_DATE="2023-05-11"
-BIN_DIR="$HOME/bin"
+BIN_DIR="/usr/local/bin"
 
 echo "==========================================="
 echo "🚀 AWS CLI & Kubernetes 환경 자동 설치"
@@ -24,16 +24,20 @@ source ~/.bash_profile
 # 2️⃣ kubectl 설치
 echo "[2/5] 🛠 kubectl 설치 중..."
 curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/${KUBECTL_VERSION}/${KUBECTL_RELEASE_DATE}/bin/linux/amd64/kubectl
-chmod u+x kubectl
-mkdir -p ${BIN_DIR} && cp ./kubectl ${BIN_DIR}/kubectl && export PATH=${BIN_DIR}:$PATH
-echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/kubectl
+export PATH=$PATH:/usr/local/bin
+echo 'export PATH=$PATH:/usr/local/bin' >> ~/.bashrc
 source ~/.bashrc
 
 # 3️⃣ K9s 설치
 echo "[3/5] 🛠 K9s 설치 중..."
 curl -sS https://webinstall.dev/k9s | bash
+export PATH=$HOME/.local/bin:$PATH
+echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
 
-# 4️⃣ EKS kubeconfig 업데이트 (AWS 키 입력 제거)
+# 4️⃣ EKS kubeconfig 업데이트
 echo "[4/5] 🛠 EKS 클러스터 설정 중..."
 aws --profile ${AWS_PROFILE} eks --region ${AWS_REGION} update-kubeconfig --name ${EKS_CLUSTER_NAME} --alias ${EKS_CLUSTER_NAME}
 
