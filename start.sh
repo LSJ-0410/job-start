@@ -12,7 +12,7 @@ echo "==========================================="
 echo "🚀 AWS CLI & Kubernetes 환경 자동 설치"
 echo "==========================================="
 
-# 1️⃣ AWS CLI 최신 버전 설치 (Terraform에서 설치 안 하므로 여기서 설치)
+# 1️⃣ AWS CLI 최신 버전 설치
 echo "[1/6] 🛠 AWS CLI 설치 중..."
 sudo yum remove -y awscli
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -33,25 +33,12 @@ source ~/.bashrc
 echo "[3/6] 🛠 K9s 설치 중..."
 curl -sS https://webinstall.dev/k9s | bash
 
-# 4️⃣ AWS Access Key 설정 자동화
-echo "[4/6] 🛠 AWS 키 설정 (Access Key & Secret Key 입력)"
-read -p "👉 AWS Access Key ID: " AWS_ACCESS_KEY
-read -s -p "👉 AWS Secret Access Key: " AWS_SECRET_KEY
-echo ""
-read -p "👉 Default AWS Region [$AWS_REGION]: " AWS_INPUT_REGION
-AWS_REGION=${AWS_INPUT_REGION:-$AWS_REGION}
-
-aws configure set aws_access_key_id "$AWS_ACCESS_KEY" --profile ${AWS_PROFILE}
-aws configure set aws_secret_access_key "$AWS_SECRET_KEY" --profile ${AWS_PROFILE}
-aws configure set region "$AWS_REGION" --profile ${AWS_PROFILE}
-aws configure set output "json" --profile ${AWS_PROFILE}
-
-# 5️⃣ EKS kubeconfig 업데이트
-echo "[5/6] 🛠 EKS 클러스터 설정 중..."
+# 4️⃣ EKS kubeconfig 업데이트 (AWS 키 입력 제거)
+echo "[4/6] 🛠 EKS 클러스터 설정 중..."
 aws --profile ${AWS_PROFILE} eks --region ${AWS_REGION} update-kubeconfig --name ${EKS_CLUSTER_NAME} --alias ${EKS_CLUSTER_NAME}
 
-# 6️⃣ Kubernetes 컨텍스트 설정
-echo "[6/6] 🛠 Kubernetes 컨텍스트 설정 중..."
+# 5️⃣ Kubernetes 컨텍스트 설정
+echo "[5/6] 🛠 Kubernetes 컨텍스트 설정 중..."
 kubectl config use-context ${EKS_CLUSTER_NAME}
 
 # ✅ 설치 검증
