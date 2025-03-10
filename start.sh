@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# 🚀 AWS CLI & Kubernetes 환경 자동 설치 (보안 정책 준수)
 echo "==========================================="
-echo "🚀 AWS CLI & Kubernetes 환경 자동 설치 (보안 강화 버전)"
+echo "🚀 AWS CLI & Kubernetes 환경 자동 설치"
 echo "==========================================="
 
-# ✅ 1️⃣ 시스템 패키지 업데이트 (보안 패치 적용)
+# ✅ 1️⃣ 시스템 패키지 업데이트
+echo "[✔] 시스템 패키지 업데이트 중..."
 sudo yum update -y
 
-# ✅ 2️⃣ 네트워크 연결 확인 (보안 강화)
+# ✅ 2️⃣ 네트워크 연결 확인
 echo "[✔] 인터넷 연결 확인 중..."
 while ! curl -s --head --fail https://www.google.com; do
     sleep 5
@@ -37,31 +37,43 @@ echo 'export PATH=$PATH:/usr/local/bin' >> ~/.bashrc
 source ~/.bashrc
 echo "[✔] kubectl 설치 완료: $(kubectl version --short --client 2>&1)"
 
-# ✅ 5️⃣ K9s 설치 (보안 강화)
+# ✅ 5️⃣ k9s 설치 (GitHub 직접 다운로드 방식 적용)
 echo "[✔] K9s 설치 중..."
-export HOME=/home/ec2-user
+
+# ✅ `k9s` 실행을 위한 디렉토리 생성 및 권한 수정
+sudo mkdir -p /home/ec2-user/.local/bin
+sudo mkdir -p /home/ec2-user/.local/state
+sudo mkdir -p /home/ec2-user/.config/k9s
+sudo chown -R ec2-user:ec2-user /home/ec2-user/.local
+sudo chown -R ec2-user:ec2-user /home/ec2-user/.config
+sudo chmod -R 755 /home/ec2-user/.local
+sudo chmod -R 755 /home/ec2-user/.config
+
+# ✅ 최신 k9s 버전 확인 및 다운로드
+K9S_VERSION=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | grep '"tag_name"' | cut -d '"' -f 4)
+echo "[✔] K9s 최신 버전: $K9S_VERSION"
+
+curl -LO https://github.com/derailed/k9s/releases/download/${K9S_VERSION}/k9s_Linux_amd64.tar.gz
+tar -xzf k9s_Linux_amd64.tar.gz
+chmod +x k9s
+mv k9s /home/ec2-user/.local/bin/
+
+# ✅ k9s 실행 경로 설정
 export PATH=$HOME/.local/bin:$PATH
 echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc
-echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.profile
-mkdir -p $HOME/.config/k9s
-mkdir -p $HOME/.local/state
-mkdir -p $HOME/.local/bin
-chmod 700 $HOME/.config/k9s
-chmod 700 $HOME/.local/state
-chmod 755 $HOME/.local/bin
-chown -R ec2-user:ec2-user $HOME/.config/k9s
-chown -R ec2-user:ec2-user $HOME/.local/state
-chown -R ec2-user:ec2-user $HOME/.local/bin
+source ~/.bashrc
 
-# `k9s` 설치 & 실행 경로 확인
-su - ec2-user -c "curl -sS https://webinstall.dev/k9s | bash"
+# ✅ k9s 실행 확인
+which k9s
+k9s version
+
 echo "[✔] K9s 설치 완료"
 
-# ✅ 6️⃣ AWS IAM 역할 확인 (IAM 사용자 Key 설정 없이 사용)
+# ✅ 6️⃣ AWS IAM 역할 확인
 echo "[✔] AWS IAM 역할 확인 중..."
 aws sts get-caller-identity --query Arn
 
-# ✅ 7️⃣ EKS kubeconfig 업데이트 (IAM 역할 기반 인증 사용)
+# ✅ 7️⃣ EKS kubeconfig 업데이트
 AWS_REGION="ap-northeast-2"
 EKS_CLUSTER_NAME="my-eks"
 echo "[✔] EKS 클러스터 설정 중..."
@@ -73,7 +85,7 @@ echo "[✔] Kubernetes 컨텍스트 설정 중..."
 kubectl config use-context ${EKS_CLUSTER_NAME}
 echo "[✔] Kubernetes 설정 완료"
 
-# ✅ 9️⃣ 설치 검증 (보안 확인)
+# ✅ 9️⃣ 설치 검증
 echo "[✔] AWS CLI 버전: $(aws --version 2>&1)"
 echo "[✔] kubectl 버전: $(kubectl version --short --client 2>&1)"
 echo "[✔] AWS IAM 역할 확인: $(aws sts get-caller-identity --query Arn)"
